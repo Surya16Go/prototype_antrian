@@ -1,0 +1,19 @@
+# Owner of all files by default
+* @Surya16Go
+
+# PHP/Laravel files
+*.php @Surya16Go
+composer.json @Surya16Go
+composer.lock @Surya16Go
+
+# Frontend files
+*.js @Surya16Go
+*.css @Surya16Go
+*.blade.php @Surya16Go
+package.json @Surya16Go
+
+# CI/CD and GitHub
+.github/ @Surya16Go
+
+# Documentation
+*.md @Surya16Go

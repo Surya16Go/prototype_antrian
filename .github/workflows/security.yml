@@ -1,0 +1,93 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ "prototype" ]
+  pull_request:
+    branches: [ "prototype" ]
+  schedule:
+    # Run every Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+jobs:
+  # ============================================
+  # Dependency Security Audit
+  # ============================================
+  dependency-audit:
+    name: 🔍 Dependency Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run Composer security audit
+        run: composer audit --format=plain
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install NPM dependencies
+        run: npm ci
+
+      - name: Run NPM audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+  # ============================================
+  # Static Analysis with PHPStan (Optional)
+  # ============================================
+  static-analysis:
+    name: 📊 Static Analysis
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2, phpstan
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Create PHPStan config if not exists
+        run: |
+          if [ ! -f phpstan.neon ]; then
+            echo "includes:" > phpstan.neon
+            echo "    - ./vendor/larastan/larastan/extension.neon" >> phpstan.neon
+            echo "" >> phpstan.neon
+            echo "parameters:" >> phpstan.neon
+            echo "    paths:" >> phpstan.neon
+            echo "        - app/" >> phpstan.neon
+            echo "    level: 5" >> phpstan.neon
+          fi
+
+      - name: Run PHPStan
+        run: |
+          composer require --dev larastan/larastan --no-interaction || true
+          ./vendor/bin/phpstan analyse --memory-limit=2G || true

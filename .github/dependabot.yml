@@ -1,0 +1,55 @@
+version: 2
+updates:
+  # Composer (PHP dependencies)
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Jakarta"
+    labels:
+      - "dependencies"
+      - "php"
+    commit-message:
+      prefix: "chore(deps)"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "Surya16Go"
+    target-branch: "prototype"
+
+  # NPM (JavaScript dependencies)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Jakarta"
+    labels:
+      - "dependencies"
+      - "javascript"
+    commit-message:
+      prefix: "chore(deps)"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "Surya16Go"
+    target-branch: "prototype"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Jakarta"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(deps)"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "Surya16Go"
+    target-branch: "prototype"
