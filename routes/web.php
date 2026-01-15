@@ -1,7 +1,7 @@
 <?php
 
+use App\Http\Controllers\AdminQueueController;
 use App\Http\Controllers\QueueController;
-use App\Http\Controllers\QueuesController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,10 +18,20 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
-Route::get('/get-latest-queue',[QueueController::class, 'getLatestQueue']);
-Route::get('/queue/print', [QueueController::class,'printReceipt']);
-Route::get('/queue', [QueueController::class, 'index'])->name('queue.index');
-Route::post('/queue', [QueueController::class, 'store'])->name('queue.store');
-Route::get('/queues', [QueuesController::class, 'index'])->name('queues.index');
-Route::get('/queues/{id}', [QueuesController::class, 'show'])->name('queues.show');
-Route::PUT('/queues/{id}', [QueuesController::class, 'update'])->name('queues.update');
+
+// Public Queue Routes - Untuk pengunjung mengambil nomor antrian
+Route::prefix('queue')->name('queue.')->group(function () {
+    Route::get('/', [QueueController::class, 'index'])->name('index');
+    Route::post('/', [QueueController::class, 'store'])->name('store');
+    Route::get('/print', [QueueController::class, 'printReceipt'])->name('print');
+});
+
+Route::get('/get-latest-queue', [QueueController::class, 'getLatestQueue'])
+    ->name('queue.latest');
+
+// Admin Queue Routes - Untuk petugas mengelola antrian
+Route::prefix('queues')->name('admin.queues.')->group(function () {
+    Route::get('/', [AdminQueueController::class, 'index'])->name('index');
+    Route::get('/{id}', [AdminQueueController::class, 'process'])->name('process');
+    Route::put('/{id}', [AdminQueueController::class, 'complete'])->name('complete');
+});

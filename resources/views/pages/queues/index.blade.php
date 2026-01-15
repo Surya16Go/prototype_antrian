@@ -10,17 +10,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard System Antrian</title>
-  
+
   <!-- Icons -->
   <link rel="stylesheet" href="{{ asset('assets/vendor/fonts/fontawesome.css') }}"/>
   <link rel="stylesheet" href="{{ asset('assets/vendor/fonts/tabler-icons.css') }}"/>
   <link rel="stylesheet" href="{{ asset('assets/vendor/fonts/flag-icons.css') }}"/>
-  
+
   <!-- Core CSS -->
   <link rel="stylesheet" href="{{ asset('assets/vendor/css/rtl/core.css') }}"/>
   <link rel="stylesheet" href="{{ asset('assets/vendor/css/rtl/theme-default.css') }}"/>
   <link rel="stylesheet" href="{{ asset('assets/css/demo.css') }}"/>
-  
+
   <!-- Vendors CSS -->
   <link rel="stylesheet" href="{{ asset('assets/vendor/libs/node-waves/node-waves.css') }}"/>
   <link rel="stylesheet" href="{{ asset('assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css') }}"/>
@@ -32,7 +32,7 @@
   <link rel="stylesheet" href="{{asset('assets/vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css')}}">
   <link rel="stylesheet" href="{{ asset('assets/vendor/libs/select2/select2.css') }}"/>
   <link rel="stylesheet" href="{{ asset('assets/vendor/libs/@form-validation/umd/styles/index.min.css') }}"/>
-  
+
   <!-- Helpers -->
   <script src="{{ asset('assets/vendor/js/helpers.js') }}"></script>
   <script src="{{ asset('assets/js/config.js') }}"></script>
@@ -43,7 +43,11 @@
     <div class="content-wrapper">
       <div class="container-xxl flex-grow-1 container-p-y">
         <div class="d-flex justify-content-center align-items-center">
-          <a class="btn btn-lg btn-info" href="{{ route('queues.show',$queues->id) }}">Isi Form SKCK</a>
+          @if($queues)
+            <a class="btn btn-lg btn-info" href="{{ route('admin.queues.process', $queues->id) }}">Isi Form SKCK</a>
+          @else
+            <button class="btn btn-lg btn-secondary" disabled>Tidak ada antrian</button>
+          @endif
         </div>
         <hr>
         <h4 class="mb-4">List Antrian</h4>

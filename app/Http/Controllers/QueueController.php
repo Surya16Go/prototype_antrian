@@ -1,89 +1,86 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Enums\QueueStatus;
+use App\Http\Requests\StoreQueueRequest;
 use App\Models\Queue;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\JsonResponse;
+use Illuminate\View\View;
 
+/**
+ * Controller untuk halaman publik antrian.
+ * Digunakan oleh pengunjung untuk mengambil nomor antrian.
+ */
 class QueueController extends Controller
 {
-  public function getLatestQueue()
-  {
-    // mengambil jumlah antrian
-    $pendingCount = Queue::where('status', 'pending')->count();
+    /**
+     * Mendapatkan informasi antrian terbaru.
+     * Digunakan untuk polling dari halaman display.
+     */
+    public function getLatestQueue(): JsonResponse
+    {
+        $pendingCount = Queue::pending()->count();
 
-    // mengambil antrian terakhir berdasarkan waktu pembuatan (created_at), ambil 1 saja.
-    $latestQueue = Queue::where('status', 'processing')->orderBy('id', 'asc')->first();
-    if (!$latestQueue) {
-      $latestQueue = Queue::where('status', 'completed')->orderBy('id', 'desc')->first();
-    }
+        $latestQueue = Queue::processing()->orderBy('id', 'asc')->first();
 
-    // kita akan merespons dengan JSON
-    if ($latestQueue == null) {
-      return response()->json([
-        'pendingCount' => $pendingCount,
-        'lastQueueNumber' => 'N/A',
-      ]);
-    }
-    return response()->json([
-      'pendingCount' => $pendingCount,
-      'lastQueueNumber' => $latestQueue->number,
-    ]);
-  }
-
-  public function printReceipt()
-  {
-    $queue = Queue::where('status', 'pending')->orderBy('id', 'desc')->first();
-    $waitQueue = Queue::where('status', 'pending')->count();
-    // Kirim data ke template Blade
-    return view('pages.queue.print', compact('queue', 'waitQueue'));
-
-  }
-
-  public function index()
-  {
-    $queue = Queue::where('status', 'processing')->orderBy('id', 'asc')->first();
-    if (!$queue) {
-      $queue = Queue::where('status', 'pending')->orderBy('id', 'asc')->first();
-    }
-    $pendingCount = Queue::where('status', 'pending')->count();
-    return view('pages.queue.index', compact('queue', 'pendingCount'));
-  }
-
-  public function store(Request $request)
-  {
-    $rules = [
-      'passFoto' => 'required|in:on',
-      'fcKTP' => 'required|in:on',
-      'fcKK' => 'required|in:on',
-      'keperluan' => 'required'
-    ];
-
-    $validator = Validator::make($request->all(), $rules);
-
-    if ($validator->fails()) {
-      $errors = $validator->errors()->messages();
-      $fields = array_keys($errors);
-      foreach ($fields as $field) {
-        if ($field == 'passFoto') {
-          $fields[array_search($field, $fields)] = 'Pass Foto';
-        } elseif ($field == 'fcKTP') {
-          $fields[array_search($field, $fields)] = 'Foto Copy KTP';
-        } elseif ($field == 'fcKK') {
-          $fields[array_search($field, $fields)] = 'Foto Copy KK';
+        if (! $latestQueue) {
+            $latestQueue = Queue::completed()->orderBy('id', 'desc')->first();
         }
-      }
-      $fields_str = implode(', ', $fields);
-      return response()->json(['message' => 'Tolong lengkapi persaratan: ' . $fields_str], 400);
+
+        if ($latestQueue === null) {
+            return response()->json([
+                'pendingCount' => $pendingCount,
+                'lastQueueNumber' => 'N/A',
+            ]);
+        }
+
+        return response()->json([
+            'pendingCount' => $pendingCount,
+            'lastQueueNumber' => $latestQueue->number,
+        ]);
     }
 
-    $queue = Queue::create([
-      'number' => 'A - ' . str_pad(Queue::count() + 1, 3, '0', STR_PAD_LEFT),
-      'request' => $request->keperluan,
-      'status' => 'pending'
-    ]);
+    /**
+     * Menampilkan halaman cetak struk antrian.
+     */
+    public function printReceipt(): View
+    {
+        $queue = Queue::pending()->orderBy('id', 'desc')->first();
+        $waitQueue = Queue::pending()->count();
 
-    return response()->json(['message' => 'Antrian berhasil ditambahkan.']);
-  }
+        return view('pages.queue.print', compact('queue', 'waitQueue'));
+    }
+
+    /**
+     * Menampilkan halaman utama antrian publik.
+     */
+    public function index(): View
+    {
+        $queue = Queue::processing()->orderBy('id', 'asc')->first();
+
+        if (! $queue) {
+            $queue = Queue::pending()->orderBy('id', 'asc')->first();
+        }
+
+        $pendingCount = Queue::pending()->count();
+
+        return view('pages.queue.index', compact('queue', 'pendingCount'));
+    }
+
+    /**
+     * Menyimpan antrian baru.
+     */
+    public function store(StoreQueueRequest $request): JsonResponse
+    {
+        Queue::create([
+            'number' => Queue::generateNextNumber(),
+            'request' => $request->validated()['keperluan'],
+            'status' => QueueStatus::PENDING,
+        ]);
+
+        return response()->json(['message' => 'Antrian berhasil ditambahkan.']);
+    }
 }
