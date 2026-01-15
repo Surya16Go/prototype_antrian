@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('number')->unique();
             $table->text('request');
-            $table->enum('status', ['pending', 'processing', 'completed','uncompleted']);
+            $table->enum('status', ['pending', 'processing', 'completed', 'uncompleted']);
             $table->timestamps();
         });
     }
