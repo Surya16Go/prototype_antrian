@@ -63,7 +63,6 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, json
-          coverage: xdebug
           tools: composer:v2
 
       - name: Cache Composer dependencies
@@ -85,31 +84,8 @@ jobs:
       - name: Set directory permissions
         run: chmod -R 777 storage bootstrap/cache
 
-      - name: Create SQLite database
-        run: |
-          mkdir -p database
-          touch database/database.sqlite
-
-      - name: Run database migrations
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ${{ github.workspace }}/database/database.sqlite
-        run: php artisan migrate --force
-
-      - name: Execute tests with coverage
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ${{ github.workspace }}/database/database.sqlite
-        run: vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
-
-      - name: Upload coverage to Codecov
-        if: matrix.php == '8.2'
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./coverage.xml
-          fail_ci_if_error: false
-          verbose: true
-        continue-on-error: true
+      - name: Execute tests
+        run: php artisan test
 
   # ============================================
   # Job 3: Security Audit
